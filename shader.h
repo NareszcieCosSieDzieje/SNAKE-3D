@@ -1,0 +1,9 @@
+#ifndef SHADER_H
+#define SHADER_H
+
+//VERTEX SHADER
+//GEOMETRY SHADER
+//FRAGMENT SHADER
+
+
+#endif SHADER_H
