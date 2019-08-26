@@ -8,24 +8,70 @@
 #include "board.h"
 #include "food.h"
 #include "block.h"
+#include <cmath>
+#include <stdlib.h> 
 #define SNAKE_SIZE 100
 #define SNAKE_HEAD_INDEX 0
 
 class Snake
 {
 private:
-	std::vector< std::tuple<int, int, int>> snake_coords;
+	float vertices[180] = {
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	};
+	GLuint VAO, VBO;
+	std::vector< Block *> snake_blocks; //snake_blocks
 	int length;
 public:
 	Snake();
-	Snake(std::tuple<int, int, int> coords); 
+	Snake(glm::ivec3 coordinates);
 	~Snake();
-	std::vector< std::tuple<int, int, int>> getCoords(void);
-	void setInitialCoords(std::tuple<int, int, int> coords);
+	std::vector<Block*> getCoords(void);
+	void setInitialCoords(glm::ivec3 coordinates);
 	bool Move(directions dir, const Board* board, Food* food); 
-	bool canEat(std::tuple<int, int, int> head_coords, std::tuple<int, int, int> food_coords);
-	bool doesCollide(std::vector<std::tuple<int, int, int>> snake, const Board* board);
-	void Draw(void);
+	bool canEat(glm::vec3 head_coords, glm::vec3 food_coords);
+	bool doesCollide(std::vector<Block*> snake, const Board* board);
+	void Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram);
 };
 
 #endif SNAKE_H

@@ -3,86 +3,171 @@
 //TODO: INIT VALUES
 Snake::Snake()
 {
-	std::tuple<int, int, int> initial = std::make_tuple(-1, -1, -1);
-	Snake::snake_coords.resize(SNAKE_SIZE); 
-	std::fill(Snake::snake_coords.begin(), Snake::snake_coords.end(), initial);
-	std::get<0>(Snake::snake_coords[SNAKE_HEAD_INDEX]) = 5; 
-	std::get<1>(Snake::snake_coords[SNAKE_HEAD_INDEX]) = 5;
-	std::get<2>(Snake::snake_coords[SNAKE_HEAD_INDEX]) = 0;
+	Snake::snake_blocks.resize(1);//SNAKE_SIZE); 
+	//std::fill(Snake::snake_blocks.begin(), Snake::snake_blocks.end(), NULL);
+	Block* block = new Block(glm::vec3(2.0f,1.0f,3.0f));
+	Snake::snake_blocks[SNAKE_HEAD_INDEX] = block;
 	Snake::length = 1;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	//TODO: zaladuj tutaj dane blokow
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glBindVertexArray(0);
 }
 
-Snake::Snake(std::tuple<int, int, int> coords)
+Snake::Snake(glm::ivec3 coordinates) //moze vec3 tylko uzyj floor na wartosciach
 {
-	std::tuple<int, int, int> initial = std::make_tuple(-1, -1, -1);
-	Snake::snake_coords.resize(SNAKE_SIZE);
-	std::fill(Snake::snake_coords.begin(), Snake::snake_coords.end(), initial);
-	Snake::setInitialCoords(coords);
+    Snake::snake_blocks.resize(1); // ma nulle wtedy i dupa w does collide
+	//std::fill(Snake::snake_blocks.begin(), Snake::snake_blocks.end(), NULL);
+	Block* block = new Block(coordinates);
+	Snake::snake_blocks[SNAKE_HEAD_INDEX] = block;
 	Snake::length = 1;
+	//generate vaos
+	glGenVertexArrays(1, &VAO); 
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	//TODO: zaladuj tutaj dane blokow
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glBindVertexArray(0);
 }
 
-Snake::~Snake(){}
+
+Snake::~Snake(){
+	//TODO: cleanup memory from vector
+	//TODO: check if this works yooo
+	for (auto& block : Snake::snake_blocks) {
+		delete block;
+		block = nullptr;
+	}
+	Snake::snake_blocks.clear();
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO); //TODO: CHECK
+}
 
 
-std::vector<std::tuple<int, int, int>> Snake::getCoords()
+std::vector<Block*> Snake::getCoords() //FIXME: rework this whatever it is
 {
-	return Snake::snake_coords;
+	return Snake::snake_blocks;
 }
 
-void Snake::setInitialCoords(std::tuple<int, int, int> coords)
+void Snake::setInitialCoords(glm::ivec3 coordinates) //FIXME: do i need this even??
 {
-	Snake::snake_coords[SNAKE_HEAD_INDEX] = coords;
+	Snake::snake_blocks[SNAKE_HEAD_INDEX]->setCoordinates(coordinates);
 }
 
 
+
+
+//ruch weza moglby byc taki ze ostatni element na miejsce nowe wrzucam ale jak inne tekstury i ksztaly mialyby bloki to to nie dziala
 //ruch w osi z
 //ROZWazyc ruch dla length 1 i 2 i 3 !!!!!!!!!!!!!!
-bool Snake::Move(directions dir, const Board* board, Food* food) 
+bool Snake::Move(directions dir, const Board* board, Food* food) //TODO: BED¥ LEAKY PAMIECI PRZEZ OSTATNI ELEMENT SPRAWDZ??
 {
-	const std::tuple<int, int, int> empty = std::make_tuple(-1,-1,-1);
-	std::vector<std::tuple<int, int, int>> moved_snake;
-	moved_snake.resize(Snake::snake_coords.size());
-	std::fill((moved_snake.begin() + Snake::length) , moved_snake.end(), empty);
-	for (int i = 0; i < Snake::length - 2; i++) 
-	{
-		moved_snake[i+1] = Snake::snake_coords[i];
-	}
-	moved_snake[SNAKE_HEAD_INDEX] = Snake::snake_coords[SNAKE_HEAD_INDEX];
-	if (dir == left) 
-	{
-		std::get<0>(moved_snake[0]) = std::get<0>(Snake::snake_coords[0]) - 1 ;
-	}
-	else if (dir == right) 
-	{
-		std::get<0>(moved_snake[0]) = std::get<0>(Snake::snake_coords[0]) + 1;
-	}
-	else if (dir == upwards)
-	{
-		std::get<1>(moved_snake[0]) = std::get<1>(Snake::snake_coords[0]) - 1;
-	}
-	else if (dir == downwards)
-	{
-		std::get<1>(moved_snake[0]) = std::get<1>(Snake::snake_coords[0]) + 1;
-	}
-	else
-	{//TODO: 
-	}
-	if (Snake::canEat(moved_snake[0], food->getCoords()) ) //predykat ze musi byc jedzenie w srodku boarda i do tego poza koordynatami g_snake'a
-	{
-		food->getEaten(board, Snake::snake_coords);
-		if( static_cast<int>(Snake::snake_coords.size()) == Snake::length )
+	//trzeba zrobic tak ze rusza sie mniej ale nie moze skrecic do poki nie ma calkowitoliczbowej pozycji
+	static std::vector<glm::vec3> block_movement;
+	static int counter = 0;
+	static bool lock = false;
+	static bool head_lock = false;
+	static directions current_direction;
+	static bool add_tail = false;
+	float movement = 0.05f;
+	int cycles = 1.0f / movement; //20
+
+	glm::vec3 head_coordinates = Snake::snake_blocks[0]->getCoordinates();
+	if (counter == 0) {
+		block_movement.clear();
+		for (int i = Snake::length - 1; i > 0; i--) //musze miec blokade na kazdy element tak ze on bedzie dojezdzal do tego gdzie byl jego poprzednik w cyklu calkowitym
 		{
-			moved_snake.resize(moved_snake.size() * 2);
-			std::fill( (moved_snake.begin() + Snake::length + 1) , moved_snake.end(), empty);
+			glm::vec3 predecesor = Snake::snake_blocks[i]->getCoordinates();
+			glm::vec3 succesor = Snake::snake_blocks[i - 1]->getCoordinates();
+			glm::vec3 difference = glm::vec3((succesor.x - predecesor.x), (succesor.y - predecesor.y), (succesor.z - predecesor.z));
+			//podziel elementy przez ilosc cykli
+			difference /= 20;  //cycles
+			block_movement.insert(block_movement.begin(), difference); //jeszcze dla glowy ???
+		//	Snake::snake_blocks[i]->setCoordinates(Snake::snake_blocks[i - 1]->getCoordinates());
 		}
-		moved_snake[Snake::length] = Snake::snake_coords[Snake::length - 1]; //TODO: BRO OSTATNI ELEMENT
-		Snake::snake_coords = moved_snake;
-		Snake::length++;
+	}
+	if (lock == false) {
+		lock = true; //NEW!
+		current_direction = dir;
+	}
+	if (current_direction == left)
+	{
+		head_coordinates.x -= movement; //1 normalnie
+	}
+	else if (current_direction == right)
+	{
+		head_coordinates.x += movement;
+	}
+	else if (current_direction == upwards)
+	{
+		head_coordinates.z -= movement;
+	}
+	else if (current_direction == downwards)
+	{
+		head_coordinates.z += movement;
+	}
+	else {
+	//TODO:???
+	}
+	++counter;
+	if (counter == 20) {//cycles here
+		head_coordinates = glm::vec3(round(head_coordinates.x), round(head_coordinates.y), round(head_coordinates.z));
+	}
+	if (add_tail == true) {
+		add_tail = false;
+		Snake::snake_blocks.insert(Snake::snake_blocks.begin(), new Block(head_coordinates)); //tutaj jakis lock ze tylko glowa sie rusza xd
+		Snake::length++; //TODO: jeszcze to sprawdz xd
+	}
+	else { //blok sie daje jak on wyjdzie?? //dawac cleara na movement przy koncu cyklu
+		if (head_lock == false) { 
+			//block movement!!!
+			//zbierz te kierunki jak sie maja ruszac i potem ich ruszaj o tyle
+			
+			for (int i = Snake::length - 1; i > 0; i--) //musze miec blokade na kazdy element tak ze on bedzie dojezdzal do tego gdzie byl jego poprzednik w cyklu calkowitym
+			{
+				Snake::snake_blocks[i]->setCoordinates(Snake::snake_blocks[i]->getCoordinates() + block_movement[i-1]);
+			}
+			if (counter == 20) {
+				for (int i = 0; i < Snake::length; i++) //musze miec blokade na kazdy element tak ze on bedzie dojezdzal do tego gdzie byl jego poprzednik w cyklu calkowitym
+				{
+					glm::vec3 coords = Snake::snake_blocks[i]->getCoordinates();
+					coords = glm::vec3(abs(round(coords.x)), abs(round(coords.y)), abs(round(coords.z))); //albo abs
+					Snake::snake_blocks[i]->setCoordinates(coords);
+				}
+			}
+		}
+	    if ((head_lock == true) && (counter == 20)) {
+			head_lock = false;
+		}//cos do zrobienia head_lock false
+		Snake::snake_blocks[0]->setCoordinates(head_coordinates);
+	}
+	if (counter == 20) {//treshhold here
+		counter = 0;
+		lock = false;
+	}
+	if (Snake::canEat(Snake::snake_blocks[0]->getCoordinates(), food->getCoords()) ) //predykat ze musi byc jedzenie w srodku boarda i do tego poza koordynatami g_snake'a
+	{
+		add_tail = true;
+		head_lock = true;
+		food->getEaten(board, Snake::snake_blocks);
 	}
 	else
 	{
-		Snake::snake_coords = moved_snake;
-		if (Snake::doesCollide(Snake::snake_coords, board))
+		if (Snake::doesCollide(Snake::snake_blocks, board))
 		{
 			return true;
 		}
@@ -90,26 +175,37 @@ bool Snake::Move(directions dir, const Board* board, Food* food)
 	return false;
 }
 
-//jakis czit powiadomienia dla fooda
-bool Snake::canEat(std::tuple<int, int, int> head_coords, std::tuple<int, int, int> food_coords)
+//jakis czit powiadomienia dla foodassw
+bool Snake::canEat(glm::vec3 head_coords, glm::vec3 food_coords)
 {
-	return (head_coords == food_coords);
+	return ( (head_coords.x == food_coords.x) && (head_coords.y == food_coords.y) && (head_coords.z == food_coords.z) );
+
 }
 
 //TODO: SPRAWDZ CZY POZA PLANSZE WYCHODZI !!!
-bool Snake::doesCollide(std::vector<std::tuple<int, int, int>> snake, const Board* board)
+bool Snake::doesCollide(std::vector<Block* > snake, const Board* board)
 {
-	for(int l = 0; l < snake.size(); l++)
+	for(int l = 0; l < snake.size(); l++) //nie snake size tylko length
 	{
-		if ( (std::get<0>(snake[l]) < 0) || (std::get<1>(snake[l]) < 0) || (std::get<2>(snake[l]) < 0) || (std::get<0>(snake[l]) > std::get<0>(board->getDimensions()) - 1 ) || (std::get<1>(snake[l]) > std::get<1>(board->getDimensions()) - 1 ) || (std::get<2>(snake[l]) > std::get<2>(board->getDimensions()) - 1))
+		if ( (snake[l]->getCoordinates().x < 0) || (snake[l]->getCoordinates().z < 0) || (snake[l]->getCoordinates().y < 0) || (snake[l]->getCoordinates().x > board->getDimensions().x - 1 ) || (snake[l]->getCoordinates().z > board->getDimensions().z - 1 ) /*|| sd(snake[l]->getCoordinates().y > board->getDimensions().y - 1)*/ )
+		//if ((snake[l]->getCoordinates().x < -1) || (snake[l]->getCoordinates().z < -1) || (snake[l]->getCoordinates().y < 0) || (snake[l]->getCoordinates().x > board->getDimensions().x) || (snake[l]->getCoordinates().z > board->getDimensions().z) /*|| sd(snake[l]->getCoordinates().y > board->getDimensions().y - 1)*/)
 		{
+			printf("\nsnake[%i]->getCoordinates().x = %.f\n", l, snake[l]->getCoordinates().x);
+			printf("snake[%i]->getCoordinates().y = %.f\n", l, snake[l]->getCoordinates().y);
+			printf("snake[%i]->getCoordinates().z = %.f\n", l, snake[l]->getCoordinates().z);
+			printf("board->getDimensions().x - 1 = %i\n", board->getDimensions().x - 1);
+			printf("board->getDimensions().z - 1 = %i\n", board->getDimensions().z - 1);
 			return true;
 		}
 	}
 	for (int i = 1; i < snake.size(); i++)
 	{
-		if (snake[0] == snake[i])
+		if (snake[0]->getCoordinates() == snake[i]->getCoordinates())
 		{
+			printf("SNAKE == SNAKE situation 2\n");
+			printf("snake[0].x = %.f  AND  snake[%i].x = %.f\n", snake[0]->getCoordinates().x ,i, snake[i]->getCoordinates().x);
+			printf("snake[0].y = %.f  AND  snake[%i].y = %.f\n", snake[0]->getCoordinates().y, i, snake[i]->getCoordinates().y);
+			printf("snake[0].z = %.f  AND  snake[%i].z = %.f\n", snake[0]->getCoordinates().z, i, snake[i]->getCoordinates().z);
 			return true;
 		}
 	}
@@ -117,26 +213,14 @@ bool Snake::doesCollide(std::vector<std::tuple<int, int, int>> snake, const Boar
 }
 
 
-void Snake::Draw()
+void Snake::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram)
 {
-	/*//block array
-	const int length = Snake::length;
-	Block blocks[length]; //TODO: czy ti byl length cyz co ja uw=zywa³em
-	//stworz koordynaty blokow bloki z offsetem
-	for(int i = 0; i < Snake::length; i++)
-	{
-		Block block(Snake::snake_coords[i]); //TODO: czy konstruktor bierze jakies offsety oraz typ tekstury kolor niech bierze /// moze zamiast wskaznikow  = new Block(Snake::snake_coords[i]); // czy tu podac offset
-		blocks[i] = block;
-		//block bierze tego tupla jako const nie moze go zmienic i na podstawie tych koordynatow 
-		//oblicza sobie pozycje bloku 
-	}
-
-	// po stworzeniu blokow namaluj
-	//jakies 
+	shaderProgram->setInt("textureChoice", 2);
+	glBindVertexArray(Snake::VAO);
 	for (int i = 0; i < Snake::length; i++)
 	{
-		blocks[i].Draw(); //cos takiego?
-	}*/
-
+		Snake::snake_blocks[i]->Draw(model_matrix, view_matrix, projection_matrix, shaderProgram); //cos takiego?
+	}
+	glBindVertexArray(0);
 }
 
