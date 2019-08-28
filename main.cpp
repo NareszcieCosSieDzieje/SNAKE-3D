@@ -8,10 +8,12 @@
 #include "gltext.h"
 
 #include <chrono>
+#include <string>
 #include <iostream>
 
 #include "glm/glm.hpp"
 #include "glm/ext.hpp"
+
 
 #include "enums.h"
 #include "board.h"
@@ -117,7 +119,6 @@ void monitor_callback(GLFWmonitor* monitor, int event);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
-
 void update(void);// elapsed);
 void display(void);
 void handle_options(void);
@@ -144,27 +145,56 @@ int main()
 		processInput(window);
 		display();
 	}
-	show_text = false;
-	// Deleting text
-	gltDeleteText(text);
+	//show_text = false;
+	
+	int points = game_snake->getLength() - 1;
+	std::string textor = "Points: " + std::to_string(points);
+	gltSetText(text, textor.c_str());
 	while (!glfwWindowShouldClose(window) && (!game_over))
 	{
+		points = game_snake->getLength() - 1;
+		textor = "Points: " + std::to_string(points);
+		gltSetText(text, textor.c_str());
 		processInput(window); //TODO:: INPUT ZA CZESTO PROBKOWANY I MOZNA SIE COFAC !!!! przyklad mamy left szybkie up i od razu right i sie cofamy 
 		current = std::chrono::steady_clock::now();
-		difference = /*(float)*/(0.001f * (std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
+		difference = /*(float)*/(0.001f * static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
 		last = std::chrono::steady_clock::now();
 		//printf(" last_time = %.f\nnow_time = %.f\ndifference = %.f", last_time, now_time, accumulator);
 		accumulator += difference;
 		//printf("accumulator = %.f", accumulator);
 		//while (accumulator > (1.0f)) { // by³o (1.0f / 61.0f)
-	//	if (accumulator > (5.0f/20000)) {
-			update();
-	//		accumulator = 0;
-	//	}
+		if (accumulator > (1.0/5000)) {
+		update();
+		accumulator = 0;
+		}
 		//	accumulator -= (1.0f); //by³o 1.0f / 59.0f
 		//	if (accumulator < 0) accumulator = 0;
 		display();
 	}
+	//if esc pomin to
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		textor = "ESC PRESSED - CLOSING GAME";
+		gltSetText(text, textor.c_str());
+	}
+	else {
+		textor = "GAME OVER!";
+		gltSetText(text, textor.c_str());
+		for (int end_snake = 0; end_snake < 20; end_snake++) { //to ogolnie ma pokazac ze snake wyjechal poza plansze, piekne nie jest ale robi robote
+			update();
+		}
+	}
+	last = std::chrono::steady_clock::now();
+	while (true) {
+		current = std::chrono::steady_clock::now();
+		processInput(window);
+		display();
+		difference = static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(current - last).count());
+		if (difference > 1.0) {
+			break;
+		}
+	}
+	//TODO: przezucic do freeResources
+	gltDeleteText(text);
 	freeResources();
 	return 0;
 }
@@ -278,7 +308,7 @@ void initialize()
 	// load image, create texture and generate mipmaps
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true); 
-	unsigned char* data = stbi_load("textures/mercury.jpg", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load("textures/mercury3.jpg", &width, &height, &nrChannels, 0);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -496,6 +526,9 @@ void update()//elapsed);
 
 void display()
 {
+	//TODO: usun
+	//std::chrono::steady_clock::time_point last, current;
+	//double difference = 0;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Ustawienia t³a
 	glClearColor(0.5f, 0.5f, 0.0f, 1.0f); //tutaj zmienna do zmiany koloru t³a + jakisVariable
@@ -515,8 +548,15 @@ void display()
 	//local space -> world space -> view space -> clip space -> screen space
 
 	game_board->Draw(model, view, projection, mainShader);
+	
 	game_food->Draw(model, view, projection, mainShader);
+	
+	//current = std::chrono::steady_clock::now();
 	game_snake->Draw(model, view, projection, mainShader);
+	//last = std::chrono::steady_clock::now();
+	//difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(last - current).count()));
+	//printf(" game_snake->Draw = %.f\n\n", difference);
+
 	
 	/*glBindVertexArray(VAOs[0]);
 

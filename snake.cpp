@@ -179,7 +179,10 @@ bool Snake::Move(directions dir, const Board* board, Food* food) //TODO: BED¥ LE
 bool Snake::canEat(glm::vec3 head_coords, glm::vec3 food_coords)
 {
 	return ( (head_coords.x == food_coords.x) && (head_coords.y == food_coords.y) && (head_coords.z == food_coords.z) );
+}
 
+int	Snake::getLength(){ //NEW
+	return this->length;
 }
 
 //TODO: SPRAWDZ CZY POZA PLANSZE WYCHODZI !!!
@@ -190,11 +193,12 @@ bool Snake::doesCollide(std::vector<Block* > snake, const Board* board)
 		if ( (snake[l]->getCoordinates().x < 0) || (snake[l]->getCoordinates().z < 0) || (snake[l]->getCoordinates().y < 0) || (snake[l]->getCoordinates().x > board->getDimensions().x - 1 ) || (snake[l]->getCoordinates().z > board->getDimensions().z - 1 ) /*|| sd(snake[l]->getCoordinates().y > board->getDimensions().y - 1)*/ )
 		//if ((snake[l]->getCoordinates().x < -1) || (snake[l]->getCoordinates().z < -1) || (snake[l]->getCoordinates().y < 0) || (snake[l]->getCoordinates().x > board->getDimensions().x) || (snake[l]->getCoordinates().z > board->getDimensions().z) /*|| sd(snake[l]->getCoordinates().y > board->getDimensions().y - 1)*/)
 		{
-			printf("\nsnake[%i]->getCoordinates().x = %.f\n", l, snake[l]->getCoordinates().x);
+			/*printf("\nsnake[%i]->getCoordinates().x = %.f\n", l, snake[l]->getCoordinates().x);
 			printf("snake[%i]->getCoordinates().y = %.f\n", l, snake[l]->getCoordinates().y);
 			printf("snake[%i]->getCoordinates().z = %.f\n", l, snake[l]->getCoordinates().z);
 			printf("board->getDimensions().x - 1 = %i\n", board->getDimensions().x - 1);
 			printf("board->getDimensions().z - 1 = %i\n", board->getDimensions().z - 1);
+			*/
 			return true;
 		}
 	}
@@ -202,10 +206,12 @@ bool Snake::doesCollide(std::vector<Block* > snake, const Board* board)
 	{
 		if (snake[0]->getCoordinates() == snake[i]->getCoordinates())
 		{
+			/*
 			printf("SNAKE == SNAKE situation 2\n");
 			printf("snake[0].x = %.f  AND  snake[%i].x = %.f\n", snake[0]->getCoordinates().x ,i, snake[i]->getCoordinates().x);
 			printf("snake[0].y = %.f  AND  snake[%i].y = %.f\n", snake[0]->getCoordinates().y, i, snake[i]->getCoordinates().y);
 			printf("snake[0].z = %.f  AND  snake[%i].z = %.f\n", snake[0]->getCoordinates().z, i, snake[i]->getCoordinates().z);
+			*/
 			return true;
 		}
 	}

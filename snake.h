@@ -67,6 +67,7 @@ public:
 	Snake(glm::ivec3 coordinates);
 	~Snake();
 	std::vector<Block*> getCoords(void);
+	int	getLength(void);
 	void setInitialCoords(glm::ivec3 coordinates);
 	bool Move(directions dir, const Board* board, Food* food); 
 	bool canEat(glm::vec3 head_coords, glm::vec3 food_coords);
