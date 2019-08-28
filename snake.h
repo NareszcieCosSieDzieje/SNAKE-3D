@@ -10,6 +10,7 @@
 #include "block.h"
 #include <cmath>
 #include <stdlib.h> 
+
 #define SNAKE_SIZE 100
 #define SNAKE_HEAD_INDEX 0
 
@@ -59,8 +60,9 @@ private:
 	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
 	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
+
 	GLuint VAO, VBO;
-	std::vector< Block *> snake_blocks; //snake_blocks
+	std::vector< Block *> snake_blocks; 
 	int length;
 public:
 	Snake();

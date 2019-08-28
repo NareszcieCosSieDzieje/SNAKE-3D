@@ -191,7 +191,6 @@ bool Snake::doesCollide(std::vector<Block* > snake, const Board* board)
 	for(int l = 0; l < snake.size(); l++) //nie snake size tylko length
 	{
 		if ( (snake[l]->getCoordinates().x < 0) || (snake[l]->getCoordinates().z < 0) || (snake[l]->getCoordinates().y < 0) || (snake[l]->getCoordinates().x > board->getDimensions().x - 1 ) || (snake[l]->getCoordinates().z > board->getDimensions().z - 1 ) /*|| sd(snake[l]->getCoordinates().y > board->getDimensions().y - 1)*/ )
-		//if ((snake[l]->getCoordinates().x < -1) || (snake[l]->getCoordinates().z < -1) || (snake[l]->getCoordinates().y < 0) || (snake[l]->getCoordinates().x > board->getDimensions().x) || (snake[l]->getCoordinates().z > board->getDimensions().z) /*|| sd(snake[l]->getCoordinates().y > board->getDimensions().y - 1)*/)
 		{
 			/*printf("\nsnake[%i]->getCoordinates().x = %.f\n", l, snake[l]->getCoordinates().x);
 			printf("snake[%i]->getCoordinates().y = %.f\n", l, snake[l]->getCoordinates().y);

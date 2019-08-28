@@ -11,19 +11,22 @@
 #include <string>
 #include <iostream>
 
+//MATH
 #include "glm/glm.hpp"
 #include "glm/ext.hpp"
 
-
+//LOCAL
 #include "enums.h"
 #include "board.h"
 #include "snake.h"
 #include "food.h"
 #include "shader_loader.h"
 
+//TEXTURES
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+//TEXT
 #include "gltext.h"
 
 //Game Globals
@@ -39,21 +42,24 @@ Food* game_food;
 unsigned int SCR_WIDTH = 1000; // get from windows?
 unsigned int SCR_HEIGHT = 1000;
 
+//GLFW
 GLFWwindow* window;
 
 //Shaders
-
-Shader *mainShader, *secondaryShader;
+Shader *mainShader;
 
 //OPENGL VARIABLES
-GLuint VBOs[8], VAOs[8], EBO, vertexShader, fragmentShader, shaderProgram, shaderProgram2,
+GLuint vertexShader, fragmentShader, shaderProgram,
 texture1, texture2, texture3, texture4;
-// an optional way of delcaring opengl objs -> GLuint shaderSuperProgram;
 
-// OPENGL MATRICES
+//GLM MATRICES
 glm::mat4 model;
 glm::mat4 view;
 glm::mat4 projection;
+
+//DRAWING TEXT 
+bool show_text = true;
+GLTtext *text[3];
 
 float mixer = 0.5f;
 
@@ -62,51 +68,58 @@ void monitor_callback(GLFWmonitor* monitor, int event);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
-void update(void);// elapsed);
+void update(void);
 void display(void);
+void displayText(GLTtext* text, GLfloat x = 15.0f , GLfloat y = 10.0f , GLfloat scale = 5.0f);
 void handle_options(void);
 void initialize(void);
 void freeResources(void);
 
-bool show_text = true;
-GLTtext* text;
 
 int main()
 {
 	srand(time(NULL));
+
 	initialize();
 
 	double accumulator = 0;
 	double difference = 0;
 	std::chrono::steady_clock::time_point last, current;
 	last = std::chrono::steady_clock::now();
-
-	// Creating text
-	text = gltCreateText();
-	gltSetText(text, "Press Space to start the game!");
+	//Tworzenie tekstu
+	text[0] = gltCreateText();
+	text[1] = gltCreateText();
+	gltSetText(text[0], "Press Space to start the game!");
 	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS) ) {
 		processInput(window);
 		display();
 	}
 	//show_text = false;
+
+	//points based on time
+
+	//punkty to apples*100/czas gry czas gry to mousi byc miedzy zbieraniem jablek
 	
-	int points = game_snake->getLength() - 1;
-	std::string textor = "Points: " + std::to_string(points);
-	gltSetText(text, textor.c_str());
+	
+	int apple_number = game_snake->getLength() - 1;
+	//int points = apple_number*100
+	std::string apple_text = "Apples: " + std::to_string(apple_number);
+	gltSetText(text[0], apple_text.c_str());
 	while (!glfwWindowShouldClose(window) && (!game_over))
 	{
-		points = game_snake->getLength() - 1;
-		textor = "Points: " + std::to_string(points);
-		gltSetText(text, textor.c_str());
-		processInput(window); //TODO:: INPUT ZA CZESTO PROBKOWANY I MOZNA SIE COFAC !!!! przyklad mamy left szybkie up i od razu right i sie cofamy 
+		apple_number = game_snake->getLength() - 1;
+		apple_text = "Apples: " + std::to_string(apple_number);
+		gltSetText(text[0], apple_text.c_str());
+		processInput(window); //TODO:: INPUT ZA CZESTO PROBKOWANY I MOZNA SIE COFAC !!!! przyklad mamy left szybkie up i od razu right i sie cofamy, trzeba 
+		//zapamietywac staticiem i mierzyc zeby sie ruszyl jeden blok
 		current = std::chrono::steady_clock::now();
-		difference = /*(float)*/(0.001f * static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
+		difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
 		last = std::chrono::steady_clock::now();
 		//printf(" last_time = %.f\nnow_time = %.f\ndifference = %.f", last_time, now_time, accumulator);
 		accumulator += difference;
 		//printf("accumulator = %.f", accumulator);
 		//while (accumulator > (1.0f)) { // by³o (1.0f / 61.0f)
-		if (accumulator > (1.0/5000)) {
+		if ( (0.001f * accumulator) > (1.0/120) ) {
 		update();
 		accumulator = 0;
 		}
@@ -116,12 +129,12 @@ int main()
 	}
 	//if esc pomin to
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		textor = "ESC PRESSED - CLOSING GAME";
-		gltSetText(text, textor.c_str());
+		apple_text = "CLOSING GAME";
+		gltSetText(text[0], apple_text.c_str());
 	}
 	else {
-		textor = "GAME OVER!";
-		gltSetText(text, textor.c_str());
+		apple_text = "GAME OVER!";
+		gltSetText(text[0], apple_text.c_str());
 		for (int end_snake = 0; end_snake < 20; end_snake++) { //to ogolnie ma pokazac ze snake wyjechal poza plansze, piekne nie jest ale robi robote
 			update();
 		}
@@ -137,7 +150,8 @@ int main()
 		}
 	}
 	//TODO: przezucic do freeResources
-	gltDeleteText(text);
+	gltDeleteText(text[0]);
+	gltDeleteText(text[1]);
 	freeResources();
 	return 0;
 }
@@ -153,31 +167,21 @@ void freeResources() {
 
 	// Destroy glText
 	gltTerminate(); //TODO: NEW!
-
-
 	glfwTerminate();
 }
 
 void initialize()
 {
-	
-
 	// glfw: initialize and configure
-	// ------------------------------
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
 	//monitors
-
-
-	
 	int monitor_count;
 	GLFWmonitor** monitors = glfwGetMonitors(&monitor_count);
 	GLFWmonitor* primary = NULL;
 	GLFWmonitor* secondary = NULL;
-
 	//jak null to error
 	if (monitors == NULL) {
 		//error //zle cos
@@ -350,24 +354,7 @@ void processInput(GLFWwindow* window)
 	else if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) && (snake_directions != right)) {
 		snake_directions = left;
 	}
-	//else
-	/*if ((glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS ) )
-	{
-		game_option = rotate_left;//rotate camera left
-	}
-	else if ((glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS))
-	{
-		game_option = rotate_right;//rotate camera right
-	}
-	else if ((glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS))
-	{
-		game_option = show_menu;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-	{
-		glfwSetWindowShouldClose(window, true);
-	}*/
-	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+	/*if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
 		if (mixer >= 0.9f) {
 			mixer = 1.0f;
 		}
@@ -385,7 +372,7 @@ void processInput(GLFWwindow* window)
 		else {
 			mixer -= (mixer * 0.1f);
 		}
-	}
+	}*/
 	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
 		//model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		view = glm::rotate(view, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -438,7 +425,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void update()//elapsed);
+void update()
 {
 	game_over = game_snake->Move(snake_directions, game_board, game_food);
 	//if g_food eaten g_food = new Food();
@@ -479,26 +466,7 @@ void display()
 	//difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(last - current).count()));
 	//printf(" game_snake->Draw = %.f\n\n", difference);
 
-	
-	/*glBindVertexArray(VAOs[0]);
-
-	for (unsigned int i = 0; i < 10; i++)
-	{
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, cubePositions[i]);
-		if (i % 2 != 0) {
-			model = glm::rotate(model, glm::radians((float)(5 * glfwGetTime())), glm::vec3(1.0f, 0.0f, 0.0f));
-		}
-		mainShader->setMat4("model", model);
-		mainShader->setMat4("view", view);
-		mainShader->setMat4("projection", projection);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-	}
-	glBindVertexArray(0); // no need to unbind it every time 
-	*/
-	
-	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-	// -------------------------------------------------------------------------------
+	/* 
 	if (show_text == true) {
 		// Begin text drawing (this for instance calls glUseProgram)
 		gltBeginDraw();
@@ -507,9 +475,29 @@ void display()
 		gltDrawText2D(text, 15.0f, 10.0f, 5);
 		// Finish drawing text
 		gltEndDraw();
-	}
+	}*/
 	glfwSwapBuffers(window);
 	glfwPollEvents(); //TODO: whats up with this xd
+}
+
+void displayText(GLTtext* text, GLfloat x, GLfloat y, GLfloat scale) {
+
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glClearColor(0.5f, 0.5f, 0.0f, 1.0f); 
+	//glClear(GL_COLOR_BUFFER_BIT);
+	
+	mainShader->use();
+	
+	// Begin text drawing (this for instance calls glUseProgram)
+	gltBeginDraw();
+	// Draw any amount of text between begin and end
+	gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+	gltDrawText2D(text, x, y, scale);
+	// Finish drawing text
+	gltEndDraw();
+	
+	//glfwSwapBuffers(window);
+	//glfwPollEvents(); //TODO: whats up with this xd
 }
 
 void handle_options()
