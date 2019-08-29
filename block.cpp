@@ -61,3 +61,14 @@ void Block::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projec
 	shaderProgram->setMat4("projection", projection_matrix);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
+
+void Block::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram, float rotation_degrees, glm::vec3 translation)
+{
+	model_matrix = glm::translate(model_matrix, Block::coordinates);
+	model_matrix = glm::translate(model_matrix, translation);
+	model_matrix = glm::rotate(model_matrix, glm::radians(rotation_degrees), glm::vec3(0.0f, 1.0f, 0.0f)); 
+	shaderProgram->setMat4("model", model_matrix);
+	shaderProgram->setMat4("view", view_matrix);
+	shaderProgram->setMat4("projection", projection_matrix);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}

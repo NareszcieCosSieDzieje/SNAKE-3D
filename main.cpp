@@ -61,7 +61,7 @@ glm::mat4 projection;
 bool show_text = true;
 GLTtext *text[3];
 
-float mixer = 0.5f;
+//float mixer = 0.5f;
 
 //TODO: opengl stuff
 void monitor_callback(GLFWmonitor* monitor, int event);
@@ -69,8 +69,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
 void update(void);
+void displayInit(bool shouldDisplay, GLTtext* text, GLfloat x, GLfloat y, GLfloat scale);
 void display(void);
-void displayText(GLTtext* text, GLfloat x = 15.0f , GLfloat y = 10.0f , GLfloat scale = 5.0f);
+void display(bool shouldDisplay, GLTtext* text, GLfloat x = 15.0f, GLfloat y = 10.0f, GLfloat scale = 5.0f);
+void displayText(bool shouldDisplay, GLTtext* text, GLfloat x, GLfloat y, GLfloat scale);
 void handle_options(void);
 void initialize(void);
 void freeResources(void);
@@ -89,10 +91,35 @@ int main()
 	//Tworzenie tekstu
 	text[0] = gltCreateText();
 	text[1] = gltCreateText();
+	text[2] = gltCreateText();
+
 	gltSetText(text[0], "Press Space to start the game!");
+	gltSetText(text[1], "Nice!");
+	gltSetText(text[2], "To move the snake use the arrow keys.");
+	last = std::chrono::steady_clock::now();
+	int numText = 2;
+	float w_offset = 1.25;
+	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) ) {
+		current = std::chrono::steady_clock::now();
+		difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(current - last).count()));
+		if ( (difference > 5.0) && (numText == 2) ) {
+			gltSetText(text[2], "To move the camera around use AWSD or UHJK.");
+			numText++;
+			w_offset = 0.5;
+		}
+		else if ( (difference > 7.5) && (numText == 3) ){
+			gltSetText(text[2], "To quit the game press ESC.");
+			w_offset = 1.75;
+			numText++;
+		} 
+		else if ((difference > 10.0) && (numText == 4)) {
+			break;
+		}
+		displayInit(true, text[2], w_offset*SCR_WIDTH/8, SCR_HEIGHT/2, 5.0f);
+	}
 	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS) ) {
 		processInput(window);
-		display();
+		display(true,text[0], 15.0f, 10.0f, 5.0f);
 	}
 	//show_text = false;
 
@@ -125,16 +152,17 @@ int main()
 		}
 		//	accumulator -= (1.0f); //by³o 1.0f / 59.0f
 		//	if (accumulator < 0) accumulator = 0;
-		display();
+		display(true,text[0], 20.0f, 10.0f, 5.0f);
 	}
 	//if esc pomin to
+	std::string ending_text;
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		apple_text = "CLOSING GAME";
-		gltSetText(text[0], apple_text.c_str());
+		ending_text = "CLOSING GAME";
+		gltSetText(text[0], ending_text.c_str());
 	}
 	else {
-		apple_text = "GAME OVER!";
-		gltSetText(text[0], apple_text.c_str());
+		ending_text = "GAME OVER!";
+		gltSetText(text[0], ending_text.c_str());
 		for (int end_snake = 0; end_snake < 20; end_snake++) { //to ogolnie ma pokazac ze snake wyjechal poza plansze, piekne nie jest ale robi robote
 			update();
 		}
@@ -143,7 +171,7 @@ int main()
 	while (true) {
 		current = std::chrono::steady_clock::now();
 		processInput(window);
-		display();
+		display(true,text[0]);
 		difference = static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(current - last).count());
 		if (difference > 1.0) {
 			break;
@@ -152,6 +180,7 @@ int main()
 	//TODO: przezucic do freeResources
 	gltDeleteText(text[0]);
 	gltDeleteText(text[1]);
+	gltDeleteText(text[2]);
 	freeResources();
 	return 0;
 }
@@ -322,14 +351,14 @@ void initialize()
 
 	game_over = false;
 	snake_directions = right;
-	game_board = new Board(glm::ivec3( rand() % 20 + 10, 1, rand() % 20 + 10)); //TODO: parametry
+	game_board = new Board(glm::ivec3( rand() % 5 + 10, 1, rand() % 5 + 10)); //TODO: parametry
 	game_snake = new Snake(); //ssgame_board->generateSnakePosition());
 	game_food = new Food(); // game_board->generateFoodPosition(game_snake->getCoords()));
 
 
 	model = glm::mat4(1.0f);
 	view = glm::mat4(1.0f);
-	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	view = glm::translate(view, glm::vec3( -1.0f *(game_board->getDimensions().x/2), 3.0f, (-3.0f*game_board->getDimensions().z) ));
 	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	projection = glm::perspective(glm::radians(45.0f), (float(SCR_WIDTH) / float(SCR_HEIGHT)), 0.1f, 100.0f);
@@ -340,20 +369,43 @@ void initialize()
 }
 
 
+//TODO: CZASOWE OGARNICZENIE NIE DZIA£A!
 void processInput(GLFWwindow* window)
 {
-	if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) && (snake_directions != downwards)) {
-		snake_directions = upwards;
+	/*
+	double difference;
+	static std::chrono::steady_clock::time_point last, current;
+	static bool lock = false;
+	static bool once = true;
+	if (once) {
+		last = std::chrono::steady_clock::now();
+		once = false;
 	}
-	else if ((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) && (snake_directions != upwards)) {
-		snake_directions = downwards;
+	
+	current = std::chrono::steady_clock::now();
+	difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
+
+	if (difference > 2000) {
+		lock = true;
+		last = std::chrono::steady_clock::now();
 	}
-	else if ((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) && (snake_directions != left)) {
-		snake_directions = right;
-	}
-	else if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) && (snake_directions != right)) {
-		snake_directions = left;
-	}
+	else {
+		lock = false;
+	}*/
+	//if (!lock) {
+		if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) && (snake_directions != downwards)) {
+			snake_directions = upwards;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) && (snake_directions != upwards)) {
+			snake_directions = downwards;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) && (snake_directions != left)) {
+			snake_directions = right;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) && (snake_directions != right)) {
+			snake_directions = left;
+		}
+	//}
 	/*if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
 		if (mixer >= 0.9f) {
 			mixer = 1.0f;
@@ -412,8 +464,6 @@ void processInput(GLFWwindow* window)
 		view = glm::translate(view, glm::vec3(0.0f, 0.1f, 0.0f));
 		//view = glm::rotate(view, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
-
-
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -432,6 +482,22 @@ void update()
 	//menu tutaj?
 	//handle_options();
 }
+
+void displayInit(bool shouldDisplay, GLTtext* text, GLfloat x, GLfloat y, GLfloat scale)
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Ustawienia t³a
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //tutaj zmienna do zmiany koloru t³a + jakisVariable
+	glClear(GL_COLOR_BUFFER_BIT);
+	
+	mainShader->use(); //? TODO: ?
+
+	displayText(shouldDisplay, text, x, y, scale);
+	
+	glfwSwapBuffers(window);
+	glfwPollEvents(); 
+}
+
 
 void display()
 {
@@ -452,7 +518,7 @@ void display()
 
 	// W³¹czenie odpowiedniego shaderProgramu
 	mainShader->use();
-	mainShader->setFloat("texMix", mixer); //zmienne uniform shadera
+	//mainShader->setFloat("texMix", mixer); //zmienne uniform shadera
 
 	//local space -> world space -> view space -> clip space -> screen space
 
@@ -480,24 +546,67 @@ void display()
 	glfwPollEvents(); //TODO: whats up with this xd
 }
 
-void displayText(GLTtext* text, GLfloat x, GLfloat y, GLfloat scale) {
+void display(bool shouldDisplay, GLTtext* text, GLfloat x, GLfloat y, GLfloat scale)
+{
+	//TODO: usun
+	//std::chrono::steady_clock::time_point last, current;
+	//double difference = 0;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Ustawienia t³a
+	glClearColor(0.5f, 0.5f, 0.0f, 1.0f); //tutaj zmienna do zmiany koloru t³a + jakisVariable
+	glClear(GL_COLOR_BUFFER_BIT);
+	// Bindowanie tekstur
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, texture3);
 
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glClearColor(0.5f, 0.5f, 0.0f, 1.0f); 
-	//glClear(GL_COLOR_BUFFER_BIT);
-	
+	// W³¹czenie odpowiedniego shaderProgramu
 	mainShader->use();
-	
-	// Begin text drawing (this for instance calls glUseProgram)
-	gltBeginDraw();
-	// Draw any amount of text between begin and end
-	gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-	gltDrawText2D(text, x, y, scale);
-	// Finish drawing text
-	gltEndDraw();
-	
-	//glfwSwapBuffers(window);
-	//glfwPollEvents(); //TODO: whats up with this xd
+	//mainShader->setFloat("texMix", mixer); //zmienne uniform shadera
+
+	//local space -> world space -> view space -> clip space -> screen space
+
+	game_board->Draw(model, view, projection, mainShader);
+
+	game_food->Draw(model, view, projection, mainShader);
+
+	//current = std::chrono::steady_clock::now();
+	game_snake->Draw(model, view, projection, mainShader);
+	//last = std::chrono::steady_clock::now();
+	//difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(last - current).count()));
+	//printf(" game_snake->Draw = %.f\n\n", difference);
+
+	/*
+	if (show_text == true) {
+		// Begin text drawing (this for instance calls glUseProgram)
+		gltBeginDraw();
+		// Draw any amount of text between begin and end
+		gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+		gltDrawText2D(text, 15.0f, 10.0f, 5);
+		// Finish drawing text
+		gltEndDraw();
+	}*/
+	displayText(shouldDisplay, text, x, y, scale);
+
+	glfwSwapBuffers(window);
+	glfwPollEvents(); //TODO: whats up with this xd
+}
+
+
+void displayText(bool shouldDisplay,GLTtext* text, GLfloat x, GLfloat y, GLfloat scale) {
+
+	if (shouldDisplay) {
+		// Begin text drawing (this for instance calls glUseProgram)
+		gltBeginDraw();
+		// Draw any amount of text between begin and end
+		gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+		gltDrawText2D(text, x, y, scale);
+		// Finish drawing text
+		gltEndDraw();
+	}
 }
 
 void handle_options()

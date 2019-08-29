@@ -39,9 +39,27 @@ void Food::getEaten(const Board* board, std::vector<Block*> snake_coords)
 
 void Food::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram)
 {
+	static glm::vec3 translation = glm::vec3(0.0f, 0.0f, 0.0f);
+	static float degrees = 0.0f;
+	static bool up = true;
+	degrees += 1.0f;
+	if (degrees > 360) {
+		degrees = 0.0f;
+	}
+	if (up) {
+		translation.y += 0.01f;
+	} else {
+		translation.y -= 0.01f;
+	}
+	if (translation.y > 0.5f) {
+		up = false;
+	}
+	else if (translation.y < 0.0f) {
+		up = true;
+	}
 	shaderProgram->setInt("textureChoice", 3);
 	glBindVertexArray(Food::VAO);
-	block->Draw(model_matrix,view_matrix,projection_matrix, shaderProgram);
+	block->Draw(model_matrix,view_matrix,projection_matrix, shaderProgram, degrees, translation);
 	glBindVertexArray(0);
 }
 

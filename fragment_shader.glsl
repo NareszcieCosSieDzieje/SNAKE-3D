@@ -8,7 +8,7 @@ uniform sampler2D Texture2;
 uniform sampler2D Texture3;
 uniform int textureChoice;
 
-uniform float texMix; //wspolczynnik mieszania textur do FragColor = mix(texture(Texture1, TexCoord), texture(Texture2, TexCoord), texMix);
+//uniform float texMix; wspolczynnik mieszania textur do FragColor = mix(texture(Texture1, TexCoord), texture(Texture2, TexCoord), texMix);
 
 void main()
 {
