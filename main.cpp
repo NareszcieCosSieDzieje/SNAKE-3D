@@ -104,22 +104,23 @@ int main()
 
 	last = std::chrono::steady_clock::now();
 	int numText = 2;
-	float w_offset = 1.25;
+	float w_offset = 0.9;
+	float text_scale = 1.0;
 	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_ENTER) != GLFW_PRESS) ) {
 		current = std::chrono::steady_clock::now();
 		difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(current - last).count()));
 		if ( (difference > 5.0) && (numText == 2) ) {
-			gltSetText(text[2], "To move the camera around use AWSD or UHJK.");
+			gltSetText(text[2], "To zoom in use AWSD.");
 			numText++;
-			w_offset = 0.5;
+			w_offset = 4.0;
 		}
 		else if ( (difference > 10.0) && (numText == 3) ){
-			gltSetText(text[2], "To quit the game press ESC.");
-			w_offset = 1.55;
+			gltSetText(text[2], "To change camera angles use UHJK.");
+			w_offset = 1.5;
 			numText++;
 		} 
 		else if ((difference > 15.0) && (numText == 4)) {
-			w_offset = 1.25;
+			w_offset = 0.9;
 			numText = 2;
 			last = std::chrono::steady_clock::now();
 			gltSetText(text[2], "To move the snake use the arrow keys.");
@@ -130,7 +131,7 @@ int main()
 			break;
 		}
 		processInput(window);
-		displayInit(text[2], text[3], w_offset*SCR_WIDTH/8, SCR_HEIGHT/2, 5.0f);
+		displayInit(text[2], text[3], w_offset*SCR_WIDTH/8, (SCR_HEIGHT - SCR_HEIGHT/6), 4.0f);
 	}
 	/*
 	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS) && (!game_over) ) {
@@ -450,16 +451,30 @@ void processInput(GLFWwindow* window)
 		//model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 //		view = glm::translate(view, glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-3.0f * game_board->getDimensions().z)));
 //		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	//static float pitch;
+	static float pitch = 45;
 	static float yaw = 0;
+	float pitch_angle = 0.5;
+	float up_pitch_constraint = 85;
+	float down_pitch_constraint = 10;
 	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-		//model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		view = glm::rotate(view, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		if ( (pitch > down_pitch_constraint) ) {
+			view = glm::rotate(view, glm::radians(-pitch_angle), glm::vec3(1.0f, 0.0f, 0.0f));
+			pitch -= pitch_angle;
+		} 
+		if (pitch < down_pitch_constraint) {
+			pitch = down_pitch_constraint;
+		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
-		//model = glm::rotate(model, glm::radians(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		view = glm::rotate(view, glm::radians(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		if ((pitch < up_pitch_constraint)) {
+			view = glm::rotate(view, glm::radians(pitch_angle), glm::vec3(1.0f, 0.0f, 0.0f));
+			pitch += pitch_angle;
+		}
+		if (pitch > up_pitch_constraint) {
+			pitch = up_pitch_constraint;
+		}
 	}
+	//tu trzeba jeszcze translatowac
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
 		view = glm::rotate(view, glm::radians(-1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
