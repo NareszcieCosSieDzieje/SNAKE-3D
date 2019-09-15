@@ -3,6 +3,8 @@ out vec4 FragColor;
   
 in vec2 TexCoord;
 
+//uniform vec3 lightSourceColor
+
 uniform sampler2D Texture1;
 uniform sampler2D Texture2;
 uniform sampler2D Texture3;
@@ -21,5 +23,6 @@ void main()
 	else if	(textureChoice == 3){
 	FragColor = texture(Texture3, TexCoord);
 	}
+	//FragColor = vec4(FragColor * lightSourceColor, 1.0);
 	
 }

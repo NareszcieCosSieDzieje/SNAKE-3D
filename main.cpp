@@ -10,7 +10,7 @@
 #include <chrono>
 #include <string>
 #include <iostream>
-
+#include <thread>
 //MATH
 #include "glm/glm.hpp"
 #include "glm/ext.hpp"
@@ -25,6 +25,9 @@
 //TEXTURES
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+//#include "include\irrKlang.h"
+//#pragma comment(lib, "irrKlang.lib") // link with irrKlang.dll
 
 //TEXT
 #include "gltext.h"
@@ -59,7 +62,7 @@ glm::mat4 projection;
 
 //DRAWING TEXT 
 bool show_text = true;
-GLTtext *text[3];
+GLTtext *text[4];
 
 //float mixer = 0.5f;
 
@@ -69,7 +72,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
 void update(void);
-void displayInit(bool shouldDisplay, GLTtext* text, GLfloat x, GLfloat y, GLfloat scale);
+void displayInit(GLTtext* text1, GLTtext* text2, GLfloat x, GLfloat y, GLfloat scale);
 void display(void);
 void display(bool shouldDisplay, GLTtext* text, GLfloat x = 15.0f, GLfloat y = 10.0f, GLfloat scale = 5.0f);
 void displayText(bool shouldDisplay, GLTtext* text, GLfloat x, GLfloat y, GLfloat scale);
@@ -92,14 +95,17 @@ int main()
 	text[0] = gltCreateText();
 	text[1] = gltCreateText();
 	text[2] = gltCreateText();
+	text[3] = gltCreateText();
 
 	gltSetText(text[0], "Press Space to start the game!");
 	gltSetText(text[1], "Nice!");
 	gltSetText(text[2], "To move the snake use the arrow keys.");
+	gltSetText(text[3], "Press ENTER to start.\nPress ESC to quit.");
+
 	last = std::chrono::steady_clock::now();
 	int numText = 2;
 	float w_offset = 1.25;
-	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) ) {
+	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_ENTER) != GLFW_PRESS) ) {
 		current = std::chrono::steady_clock::now();
 		difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(current - last).count()));
 		if ( (difference > 5.0) && (numText == 2) ) {
@@ -107,20 +113,30 @@ int main()
 			numText++;
 			w_offset = 0.5;
 		}
-		else if ( (difference > 7.5) && (numText == 3) ){
+		else if ( (difference > 10.0) && (numText == 3) ){
 			gltSetText(text[2], "To quit the game press ESC.");
-			w_offset = 1.75;
+			w_offset = 1.55;
 			numText++;
 		} 
-		else if ((difference > 10.0) && (numText == 4)) {
+		else if ((difference > 15.0) && (numText == 4)) {
+			w_offset = 1.25;
+			numText = 2;
+			last = std::chrono::steady_clock::now();
+			gltSetText(text[2], "To move the snake use the arrow keys.");
+			//break;
+		}
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			game_over = true;
 			break;
 		}
-		displayInit(true, text[2], w_offset*SCR_WIDTH/8, SCR_HEIGHT/2, 5.0f);
+		processInput(window);
+		displayInit(text[2], text[3], w_offset*SCR_WIDTH/8, SCR_HEIGHT/2, 5.0f);
 	}
-	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS) ) {
+	/*
+	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS) && (!game_over) ) {
 		processInput(window);
 		display(true,text[0], 15.0f, 10.0f, 5.0f);
-	}
+	}*/
 	//show_text = false;
 
 	//points based on time
@@ -132,6 +148,7 @@ int main()
 	//int points = apple_number*100
 	std::string apple_text = "Apples: " + std::to_string(apple_number);
 	gltSetText(text[0], apple_text.c_str());
+	last = std::chrono::steady_clock::now();
 	while (!glfwWindowShouldClose(window) && (!game_over))
 	{
 		apple_number = game_snake->getLength() - 1;
@@ -146,7 +163,7 @@ int main()
 		accumulator += difference;
 		//printf("accumulator = %.f", accumulator);
 		//while (accumulator > (1.0f)) { // by³o (1.0f / 61.0f)
-		if ( (0.001f * accumulator) > (1.0/120) ) {
+		if ( (0.001 * accumulator) > (1.0/120.0) ) {
 		update();
 		accumulator = 0;
 		}
@@ -165,6 +182,8 @@ int main()
 		gltSetText(text[0], ending_text.c_str());
 		for (int end_snake = 0; end_snake < 20; end_snake++) { //to ogolnie ma pokazac ze snake wyjechal poza plansze, piekne nie jest ale robi robote
 			update();
+			//TODO: lepsza plynnosc 
+			std::this_thread::sleep_for(std::chrono::milliseconds(12));
 		}
 	}
 	last = std::chrono::steady_clock::now();
@@ -181,6 +200,7 @@ int main()
 	gltDeleteText(text[0]);
 	gltDeleteText(text[1]);
 	gltDeleteText(text[2]);
+	gltDeleteText(text[3]);
 	freeResources();
 	return 0;
 }
@@ -425,6 +445,13 @@ void processInput(GLFWwindow* window)
 			mixer -= (mixer * 0.1f);
 		}
 	}*/
+
+//		view = glm::mat4(1.0f);
+		//model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+//		view = glm::translate(view, glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-3.0f * game_board->getDimensions().z)));
+//		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//static float pitch;
+	static float yaw = 0;
 	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
 		//model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		view = glm::rotate(view, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -483,19 +510,37 @@ void update()
 	//handle_options();
 }
 
-void displayInit(bool shouldDisplay, GLTtext* text, GLfloat x, GLfloat y, GLfloat scale)
+void displayInit(GLTtext* text1, GLTtext* text2, GLfloat x, GLfloat y, GLfloat scale)
 {
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Ustawienia t³a
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //tutaj zmienna do zmiany koloru t³a + jakisVariable
+	float changingColour = ((sin(glfwGetTime()) / (8 / 3)) + (3 / 8));
+	//glClearColor( ((sin(glfwGetTime()) / 2.0f) + 0.5f), 1.0f - ((sin(glfwGetTime()) / 2.0f) + 0.5f) , 1.0f, 1.0f); //tutaj zmienna do zmiany koloru t³a + jakisVariable
+	glClearColor(changingColour, changingColour, changingColour, 1.0f); //tutaj zmienna do zmiany koloru t³a + jakisVariable
 	glClear(GL_COLOR_BUFFER_BIT);
-	
-	mainShader->use(); //? TODO: ?
 
-	displayText(shouldDisplay, text, x, y, scale);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, texture3);
+
+	mainShader->use();
+	
+	game_board->Draw(model, view, projection, mainShader);
+
+	game_food->Draw(model, view, projection, mainShader);
+
+	game_snake->Draw(model, view, projection, mainShader);
+	
+	displayText(true, text1, x, y, scale);
+	displayText(true, text2, 0.0f, 0.0f, 5.0f);
 	
 	glfwSwapBuffers(window);
-	glfwPollEvents(); 
+	glfwPollEvents(); //TODO: whats up with this xd
+
 }
 
 

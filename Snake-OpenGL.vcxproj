@@ -137,6 +137,7 @@
     <ClCompile Include="block.cpp" />
     <ClCompile Include="board.cpp" />
     <ClCompile Include="food.cpp" />
+    <ClCompile Include="light_source.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="shader_loader.cpp" />
     <ClCompile Include="snake.cpp" />
@@ -152,6 +153,7 @@
     <ClInclude Include="directions.h" />
     <ClInclude Include="enums.h" />
     <ClInclude Include="food.h" />
+    <ClInclude Include="light_source.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="shader_loader.h" />
     <ClInclude Include="snake.h" />
