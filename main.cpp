@@ -390,8 +390,8 @@ void initialize()
 	model = glm::mat4(1.0f);
 	view = glm::mat4(1.0f);
 	//model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	view = glm::translate(view, glm::vec3( -1.0f *(game_board->getDimensions().x/2), 3.0f, (-3.0f*game_board->getDimensions().z) ));
-	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	view = glm::translate(view, glm::vec3( -1.0f *(game_board->getDimensions().x/2), 3.0f, (-2.5f*game_board->getDimensions().z) ));
+	view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));	
 	projection = glm::perspective(glm::radians(45.0f), (float(SCR_WIDTH) / float(SCR_HEIGHT)), 0.1f, 100.0f);
 
 
@@ -533,49 +533,54 @@ void processInput(GLFWwindow* window)
 	}
 	current = std::chrono::steady_clock::now();
 	difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
-	if (difference > 250) {
+	if (difference > 150) {
 		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-			///	view = glm::translate(view, glm::vec3(-camera_centre.x, 0.0f, camera_centre.z));
 			if (key_setup == 0) {
 				key_setup = 3;
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 				view = glm::translate(view,
-					glm::vec3(1.0f * (game_board->getDimensions().x / 2), 0.0f, (3.0f * game_board->getDimensions().z)));
+					glm::vec3(1.0f * (game_board->getDimensions().x / 2), -3.0f, (2.5f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
-					glm::vec3(-3.0f * (game_board->getDimensions().x), 0.0f, (game_board->getDimensions().z) / 2));
+				glm::vec3(-2.5f * (game_board->getDimensions().x), 3.0f, (-1.0f *game_board->getDimensions().z/2)) );
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 			else if (key_setup == 1) {
 				key_setup--;
-				//translate
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::translate(view,
+					glm::vec3(-2.0f * (game_board->getDimensions().x), 3.25f, (1.0f * game_board->getDimensions().z / 2)));
+				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.5f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 			else if (key_setup == 2) {
 				key_setup--;
-				//translate
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.0f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(2.0f * (game_board->getDimensions().x), -3.0f, (-1.0f * game_board->getDimensions().z / 2)));
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 			else if (key_setup == 3) {
 				key_setup--;
-				//translate
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::translate(view,
+					glm::vec3(2.5f * (game_board->getDimensions().x), -3.0f, (1.0f * game_board->getDimensions().z / 2)));
+				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(-1.0f * (game_board->getDimensions().x/2), -3.0f, (2.0f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
-			//view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-			/*
-			glm::mat4 super_mat = glm::mat4(0.0f, 0.0f, 0.0f, camera_centre.x,
-											0.0f, 0.0f, 0.0f, camera_centre.y,
-											0.0f, 0.0f, 0.0f, camera_centre.z,
-											0.0f, 0.0f, 0.0f, 1.0f);
-			glm::mat4 no_translation = glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
-												 0.0f, 1.0f, 0.0f, 0.0f,
-												 0.0f, 0.0f, 1.0f, 0.0f,
-												 0.0f, 0.0f, 0.0f, 0.0f
-													);
-
-			view = no_translation * view;
-			view += super_mat;
-
-					view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
-				glm::vec3(0.0f, 0.0f, 0.0f),
-				glm::vec3(0.0f, 1.0f, 0.0f));*/
-				//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
+			
+		
+		//view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		}
 		else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+			view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 			if (key_setup == 3) {
 				key_setup = 0;
@@ -583,7 +588,7 @@ void processInput(GLFWwindow* window)
 			}
 			else if (key_setup == 0) {
 				key_setup++;
-			    view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
+			    //view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
 			}
 			else if (key_setup == 1) {
 				key_setup++;
@@ -593,6 +598,7 @@ void processInput(GLFWwindow* window)
 				key_setup++;
 				//translate
 			}
+			view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		}
 		last = std::chrono::steady_clock::now();
 	}

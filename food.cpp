@@ -42,14 +42,14 @@ void Food::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 project
 	static glm::vec3 translation = glm::vec3(0.0f, 0.0f, 0.0f);
 	static float degrees = 0.0f;
 	static bool up = true;
-	degrees += 1.0f;
+	degrees += 0.5f;
 	if (degrees > 360) {
 		degrees = 0.0f;
 	}
 	if (up) {
-		translation.y += 0.01f;
+		translation.y += 0.004f;
 	} else {
-		translation.y -= 0.01f;
+		translation.y -= 0.004f;
 	}
 	if (translation.y > 0.5f) {
 		up = false;
