@@ -403,11 +403,12 @@ void initialize()
 //TODO: CZASOWE OGARNICZENIE NIE DZIA£A!
 void processInput(GLFWwindow* window)
 {
+	directions snake;
 	static bool once = true;
 	static std::chrono::steady_clock::time_point last;
 	std::chrono::steady_clock::time_point current;
-	double difference=0;
-	
+	double difference = 0;
+
 	/*
 	double difference;
 	static std::chrono::steady_clock::time_point last, current;
@@ -417,7 +418,7 @@ void processInput(GLFWwindow* window)
 		last = std::chrono::steady_clock::now();
 		once = false;
 	}
-	
+
 	current = std::chrono::steady_clock::now();
 	difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
 
@@ -430,52 +431,7 @@ void processInput(GLFWwindow* window)
 	}*/
 	//if (!lock) {
 
-	/*
 	if (key_setup == 0) {
-	 //normal		
-	}
-	else if (key_setup == 1) {
-		if (snake_directions == upwards) {
-		snake_directions ==
-		}
-		else if (snake_directions == downwards) {
-			snake_directions ==
-		}
-		else if (snake_directions == left) {
-			snake_directions ==
-		}
-		else if (snake_directions == right) {
-			snake_directions ==
-		}
-	}
-	else if (key_setup == 2) {
-		if (snake_directions == upwards) {
-			snake_directions ==
-		}
-		else if (snake_directions == downwards) {
-			snake_directions ==
-		}
-		else if (snake_directions == left) {
-			snake_directions ==
-		}
-		else if (snake_directions == right) {
-			snake_directions ==
-		}
-	}
-	else if (key_setup == 3) {
-		if (snake_directions == upwards) {
-			snake_directions ==
-		}
-		else if (snake_directions == downwards) {
-			snake_directions ==
-		}
-		else if (snake_directions == left) {
-			snake_directions ==
-		}
-		else if (snake_directions == right) {
-			snake_directions ==
-		}
-	}*/
 		if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) && (snake_directions != downwards)) {
 			snake_directions = upwards;
 		}
@@ -488,7 +444,51 @@ void processInput(GLFWwindow* window)
 		else if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) && (snake_directions != right)) {
 			snake_directions = left;
 		}
-	
+	}
+	else if (key_setup == 1) {
+		if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) && (snake_directions != left)) {
+			snake_directions = right;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) && (snake_directions != right)) {
+			snake_directions = left;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) && (snake_directions != upwards)) {
+			snake_directions = downwards;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) && (snake_directions != downwards)) {
+			snake_directions = upwards;
+		}
+	}
+	else if (key_setup == 2) {
+		if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) && (snake_directions != upwards)) {
+			snake_directions = downwards;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) && (snake_directions != downwards)) {
+			snake_directions = upwards;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) && (snake_directions != right)) {
+			snake_directions = left;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) && (snake_directions != left)) {
+			snake_directions = right;
+		}
+	}
+	else if (key_setup == 3) {
+		if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) && (snake_directions != right)) {
+			snake_directions = left;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) && (snake_directions != left)) {
+			snake_directions = right;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) && (snake_directions != downwards)) {
+			snake_directions = upwards;
+		}
+		else if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) && (snake_directions != upwards)) {
+			snake_directions = downwards;
+		}
+	}
+
+
 //		view = glm::mat4(1.0f);
 		//model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 //		view = glm::translate(view, glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-3.0f * game_board->getDimensions().z)));
@@ -533,16 +533,29 @@ void processInput(GLFWwindow* window)
 	}
 	current = std::chrono::steady_clock::now();
 	difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
-	if (difference > 500) {
+	if (difference > 250) {
 		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-			view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-			view = glm::translate(view, glm::vec3(-camera_centre.x, 0.0f, camera_centre.z));
+			///	view = glm::translate(view, glm::vec3(-camera_centre.x, 0.0f, camera_centre.z));
 			if (key_setup == 0) {
 				key_setup = 3;
+				view = glm::translate(view,
+					glm::vec3(1.0f * (game_board->getDimensions().x / 2), 0.0f, (3.0f * game_board->getDimensions().z)));
+				view = glm::translate(view,
+					glm::vec3(-3.0f * (game_board->getDimensions().x), 0.0f, (game_board->getDimensions().z) / 2));
 			}
-			else {
+			else if (key_setup == 1) {
 				key_setup--;
+				//translate
 			}
+			else if (key_setup == 2) {
+				key_setup--;
+				//translate
+			}
+			else if (key_setup == 3) {
+				key_setup--;
+				//translate
+			}
+			//view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 			/*
 			glm::mat4 super_mat = glm::mat4(0.0f, 0.0f, 0.0f, camera_centre.x,
 											0.0f, 0.0f, 0.0f, camera_centre.y,
@@ -564,12 +577,21 @@ void processInput(GLFWwindow* window)
 		}
 		else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
 			view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-			//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
 			if (key_setup == 3) {
 				key_setup = 0;
+				//translate
 			}
-			else {
+			else if (key_setup == 0) {
 				key_setup++;
+			    view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
+			}
+			else if (key_setup == 1) {
+				key_setup++;
+				//translate
+			}
+			else if (key_setup == 2) {
+				key_setup++;
+				//translate
 			}
 		}
 		last = std::chrono::steady_clock::now();
