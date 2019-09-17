@@ -89,8 +89,8 @@ int main()
 
 	double accumulator = 0;
 	double difference = 0;
-	std::chrono::steady_clock::time_point last, current;
-	last = std::chrono::steady_clock::now();
+	double text_difference = 0;
+	std::chrono::steady_clock::time_point last, current, text_last, text_now;
 	//Tworzenie tekstu
 	text[0] = gltCreateText();
 	text[1] = gltCreateText();
@@ -102,27 +102,28 @@ int main()
 	gltSetText(text[2], "To move the snake use the arrow keys.");
 	gltSetText(text[3], "Press ENTER to start.\nPress ESC to quit.");
 
-	last = std::chrono::steady_clock::now();
 	int numText = 2;
 	float w_offset = 0.9;
 	float text_scale = 1.0;
+	text_last = std::chrono::steady_clock::now();
+	last = std::chrono::steady_clock::now();
 	while (!glfwWindowShouldClose(window) && (glfwGetKey(window, GLFW_KEY_ENTER) != GLFW_PRESS) ) {
-		current = std::chrono::steady_clock::now();
-		difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(current - last).count()));
-		if ( (difference > 5.0) && (numText == 2) ) {
+		text_now = std::chrono::steady_clock::now();
+		text_difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(text_now - text_last).count()));
+		if ( (text_difference > 5.0) && (numText == 2) ) {
 			gltSetText(text[2], "To zoom in use AWSD.");
 			numText++;
 			w_offset = 4.0;
 		}
-		else if ( (difference > 10.0) && (numText == 3) ){
+		else if ( (text_difference > 10.0) && (numText == 3) ){
 			gltSetText(text[2], "To change camera angles use UHJK.");
 			w_offset = 1.5;
 			numText++;
 		} 
-		else if ((difference > 15.0) && (numText == 4)) {
+		else if ((text_difference > 15.0) && (numText == 4)) {
 			w_offset = 0.9;
 			numText = 2;
-			last = std::chrono::steady_clock::now();
+			text_last = std::chrono::steady_clock::now();
 			gltSetText(text[2], "To move the snake use the arrow keys.");
 			//break;
 		}
@@ -130,7 +131,14 @@ int main()
 			game_over = true;
 			break;
 		}
+		current = std::chrono::steady_clock::now();
+		difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
+		last = std::chrono::steady_clock::now();
+		accumulator += difference;
+		if ( (0.001 * accumulator) > (1.0/60.0) ) {
 		processInput(window);
+		accumulator = 0;
+		}
 		displayInit(text[2], text[3], w_offset*SCR_WIDTH/8, (SCR_HEIGHT - SCR_HEIGHT/6), 4.0f);
 	}
 	/*
@@ -452,7 +460,7 @@ void processInput(GLFWwindow* window)
 //		view = glm::translate(view, glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-3.0f * game_board->getDimensions().z)));
 //		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	static float pitch = 45;
-	static float yaw = 0;
+	//static float yaw = 0;
 	float pitch_angle = 0.5;
 	float up_pitch_constraint = 85;
 	float down_pitch_constraint = 10;
@@ -474,13 +482,43 @@ void processInput(GLFWwindow* window)
 			pitch = up_pitch_constraint;
 		}
 	}
-	//tu trzeba jeszcze translatowac
+	//TODO: fix this mess
+	/*
+	float up_x_yaw_constraint = (game_board->getDimensions().x / 2);
+	float down_x_yaw_constraint = -1*(game_board->getDimensions().x / 2);
+	float up_z_yaw_constraint = (-3.0f * game_board->getDimensions().z);
+	float down_z_yaw_constraint = (3.0f * game_board->getDimensions().z);
+	static float current_x_yaw = up_x_yaw_constraint;
+	static float current_z_yaw = up_z_yaw_constraint;
+	*/
+	//float radius = sqrt( ((game_board->getDimensions().x/2)^2) + (3.0f*game_board->getDimensions().z / 2) ^ 2);
+	glm::vec3 camera_centre = glm::vec3( (game_board->getDimensions().x / 2), 0.0f, (game_board->getDimensions().z / 2) );
+	static directions key_direction;
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-		view = glm::rotate(view, glm::radians(-1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		view = glm::translate(view, glm::vec3(-camera_centre.x, 0.0f, camera_centre.z));
+		/*
+		glm::mat4 super_mat = glm::mat4(0.0f, 0.0f, 0.0f, camera_centre.x,
+										0.0f, 0.0f, 0.0f, camera_centre.y,
+										0.0f, 0.0f, 0.0f, camera_centre.z,
+										0.0f, 0.0f, 0.0f, 1.0f);
+		glm::mat4 no_translation = glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
+											 0.0f, 1.0f, 0.0f, 0.0f,
+											 0.0f, 0.0f, 1.0f, 0.0f,
+											 0.0f, 0.0f, 0.0f, 0.0f
+												);
+			
+		view = no_translation * view;
+		view += super_mat;
+		
+				view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f));*/
+		//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
 	}
 	else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-		//model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		view = glm::rotate(view, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		view = glm::rotate(view, glm::radians(2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
 	}
 	else if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
@@ -489,22 +527,18 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.1f));
-		//view = glm::rotate(view, glm::radians(1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	}
 	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
 		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -0.1f));
-		//view = glm::rotate(view, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
 		view = glm::translate(view, glm::vec3(0.0f, -0.1f, 0.0f));
-		//view = glm::rotate(view, glm::radians(-1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
 		view = glm::translate(view, glm::vec3(0.0f, 0.1f, 0.0f));
-		//view = glm::rotate(view, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 }
 
