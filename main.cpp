@@ -527,52 +527,52 @@ void processInput(GLFWwindow* window)
 	*/
 	//float radius = sqrt( ((game_board->getDimensions().x/2)^2) + (3.0f*game_board->getDimensions().z / 2) ^ 2);
 	glm::vec3 camera_centre = glm::vec3( (game_board->getDimensions().x / 2), 0.0f, (game_board->getDimensions().z / 2) );
-	
 	if (once) {
 		last = std::chrono::steady_clock::now();
 		once = false;
 	}
-
 	current = std::chrono::steady_clock::now();
 	difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
-	if (difference > 500) {}
-	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-		view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		view = glm::translate(view, glm::vec3(-camera_centre.x, 0.0f, camera_centre.z));
-		if (key_setup == 0) {
-			key_setup = 3;
+	if (difference > 500) {
+		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+			view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			view = glm::translate(view, glm::vec3(-camera_centre.x, 0.0f, camera_centre.z));
+			if (key_setup == 0) {
+				key_setup = 3;
+			}
+			else {
+				key_setup--;
+			}
+			/*
+			glm::mat4 super_mat = glm::mat4(0.0f, 0.0f, 0.0f, camera_centre.x,
+											0.0f, 0.0f, 0.0f, camera_centre.y,
+											0.0f, 0.0f, 0.0f, camera_centre.z,
+											0.0f, 0.0f, 0.0f, 1.0f);
+			glm::mat4 no_translation = glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
+												 0.0f, 1.0f, 0.0f, 0.0f,
+												 0.0f, 0.0f, 1.0f, 0.0f,
+												 0.0f, 0.0f, 0.0f, 0.0f
+													);
+
+			view = no_translation * view;
+			view += super_mat;
+
+					view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
+				glm::vec3(0.0f, 0.0f, 0.0f),
+				glm::vec3(0.0f, 1.0f, 0.0f));*/
+				//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
 		}
-		else {
-			key_setup--;
+		else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+			view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
+			if (key_setup == 3) {
+				key_setup = 0;
+			}
+			else {
+				key_setup++;
+			}
 		}
-		/*
-		glm::mat4 super_mat = glm::mat4(0.0f, 0.0f, 0.0f, camera_centre.x,
-										0.0f, 0.0f, 0.0f, camera_centre.y,
-										0.0f, 0.0f, 0.0f, camera_centre.z,
-										0.0f, 0.0f, 0.0f, 1.0f);
-		glm::mat4 no_translation = glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
-											 0.0f, 1.0f, 0.0f, 0.0f,
-											 0.0f, 0.0f, 1.0f, 0.0f,
-											 0.0f, 0.0f, 0.0f, 0.0f
-												);
-			
-		view = no_translation * view;
-		view += super_mat;
-		
-				view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f));*/
-		//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
-	}
-	else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-		view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		//view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
-		if (key_setup == 3) {
-			key_setup = 0;
-		}
-		else {
-			key_setup++;
-		}
+		last = std::chrono::steady_clock::now();
 	}
 	else if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
