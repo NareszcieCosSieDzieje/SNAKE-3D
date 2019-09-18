@@ -155,14 +155,15 @@ int main()
 	
 	
 	int apple_number = game_snake->getLength() - 1;
+	int win_points = (game_board->getDimensions().x * game_board->getDimensions().z)/5;
 	//int points = apple_number*100
 	std::string apple_text = "Apples: " + std::to_string(apple_number);
 	gltSetText(text[0], apple_text.c_str());
 	last = std::chrono::steady_clock::now();
-	while (!glfwWindowShouldClose(window) && (!game_over))
+	while (!glfwWindowShouldClose(window) && (!game_over) && (apple_number != win_points) )
 	{
 		apple_number = game_snake->getLength() - 1;
-		apple_text = "Apples: " + std::to_string(apple_number);
+		apple_text =  std::to_string(win_points-apple_number) + " apples to win";
 		gltSetText(text[0], apple_text.c_str());
 		processInput(window); //TODO:: INPUT ZA CZESTO PROBKOWANY I MOZNA SIE COFAC !!!! przyklad mamy left szybkie up i od razu right i sie cofamy, trzeba 
 		//zapamietywac staticiem i mierzyc zeby sie ruszyl jeden blok
@@ -183,18 +184,27 @@ int main()
 	}
 	//if esc pomin to
 	std::string ending_text;
+	float end_duration = 1.0;
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		ending_text = "CLOSING GAME";
+		ending_text = "CLOSING GAME!";
 		gltSetText(text[0], ending_text.c_str());
 	}
 	else {
-		ending_text = "GAME OVER!";
-		gltSetText(text[0], ending_text.c_str());
+		if (apple_number == win_points) {
+			ending_text = "YOU WIN!\nAPPLES: " + std::to_string(win_points);
+			end_duration = 3.0;
+		}
+		else {
+			ending_text = "GAME OVER!\nTRY AGAIN!";
+			end_duration = 2.5;
+			
+		}
 		for (int end_snake = 0; end_snake < 20; end_snake++) { //to ogolnie ma pokazac ze snake wyjechal poza plansze, piekne nie jest ale robi robote
 			update();
 			//TODO: lepsza plynnosc 
 			std::this_thread::sleep_for(std::chrono::milliseconds(12));
 		}
+		gltSetText(text[0], ending_text.c_str());
 	}
 	last = std::chrono::steady_clock::now();
 	while (true) {
@@ -202,7 +212,7 @@ int main()
 		processInput(window);
 		display(true,text[0]);
 		difference = static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(current - last).count());
-		if (difference > 1.0) {
+		if (difference > end_duration) {
 			break;
 		}
 	}
@@ -575,30 +585,48 @@ void processInput(GLFWwindow* window)
 					glm::vec3(-1.0f * (game_board->getDimensions().x/2), -3.0f, (2.0f * game_board->getDimensions().z)));
 				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
-			
-		
-		//view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		}
 		else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-			view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-			view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 			if (key_setup == 3) {
 				key_setup = 0;
-				//translate
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::translate(view,
+					glm::vec3(2.5f * (game_board->getDimensions().x), -3.0f, (1.0f * game_board->getDimensions().z / 2)));
+				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.5f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 			else if (key_setup == 0) {
 				key_setup++;
-			    //view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.1f));
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(1.0f * (game_board->getDimensions().x / 2), -3.0f, (2.5f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(2.0f * (game_board->getDimensions().x), -3.25f, (-1.0f * game_board->getDimensions().z / 2)));
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 			else if (key_setup == 1) {
 				key_setup++;
-				//translate
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::translate(view,
+					glm::vec3(-2.0f * (game_board->getDimensions().x), 3.0f, (1.0f * game_board->getDimensions().z / 2)));
+				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(-1.0f * (game_board->getDimensions().x / 2), -3.0f, (2.0f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 			else if (key_setup == 2) {
 				key_setup++;
-				//translate
+				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.0f * game_board->getDimensions().z)));
+				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				view = glm::translate(view,
+					glm::vec3(-2.5f * (game_board->getDimensions().x), 3.0f, (-1.0f * game_board->getDimensions().z / 2)));
+				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
-			view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		}
 		last = std::chrono::steady_clock::now();
 	}
@@ -608,11 +636,33 @@ void processInput(GLFWwindow* window)
 	}
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.1f));
+		if (key_setup == 0) {
+			view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.1f));
+		}
+		else if (key_setup == 1) {
+			view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.0f));
+		}
+		else if (key_setup == 2) {
+			view = glm::translate(view, glm::vec3(0.0f, 0.0f, -0.1f));
+		}
+		else if (key_setup == 3) {
+			view = glm::translate(view, glm::vec3(0.1f, 0.0f, 0.0f));
+		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -0.1f));
+		if (key_setup == 0) {
+			view = glm::translate(view, glm::vec3(0.0f, 0.0f, -0.1f));
+		}
+		else if (key_setup == 1) {
+			view = glm::translate(view, glm::vec3(0.1f, 0.0f, 0.0f));
+		}
+		else if (key_setup == 2) {
+			view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.1f));
+		}
+		else if (key_setup == 3) {
+			view = glm::translate(view, glm::vec3(-0.1f, 0.0f, 0.0f));
+		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
