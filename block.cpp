@@ -43,23 +43,20 @@ glm::vec3 Block::getCoordinates() {
 //TODO: czy konstruktor bierze jakies offsety oraz typ tekstury kolor niech bierze /// moze zamiast wskaznikow  = new Block(Snake::snake_coords[i]); // czy tu podac offset
 void Block::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram)
 {
-	/*if (Block::texture == board)
-	{
-		
-	}
-	else if (Block::texture == snake)
-	{
-		
-	}
-	else if (Block::texture == food)
-	{
-		
-	}*/
 	model_matrix = glm::translate(model_matrix, Block::coordinates);
 	shaderProgram->setMat4("model", model_matrix);
 	shaderProgram->setMat4("view", view_matrix);
 	shaderProgram->setMat4("projection", projection_matrix);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void Block::Draw2(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram)
+{
+	model_matrix = glm::translate(model_matrix, Block::coordinates);
+	shaderProgram->setMat4("model", model_matrix);
+	shaderProgram->setMat4("view", view_matrix);
+	shaderProgram->setMat4("projection", projection_matrix);
+	glDrawArrays(GL_TRIANGLES, 0, 24);
 }
 
 void Block::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram, float rotation_degrees, glm::vec3 translation)

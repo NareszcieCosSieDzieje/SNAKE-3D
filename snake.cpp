@@ -225,7 +225,7 @@ void Snake::Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projec
 	glBindVertexArray(Snake::VAO);
 	for (int i = 0; i < Snake::length; i++)
 	{
-		Snake::snake_blocks[i]->Draw(model_matrix, view_matrix, projection_matrix, shaderProgram); //cos takiego?
+		Snake::snake_blocks[i]->Draw2(model_matrix, view_matrix, projection_matrix, shaderProgram);
 	}
 	glBindVertexArray(0);
 }

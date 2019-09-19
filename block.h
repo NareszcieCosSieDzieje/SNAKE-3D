@@ -76,6 +76,7 @@ public:
 	//float* getVertices(void);
 	void Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram);
 	void Draw(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram, float rotation_degrees, glm::vec3 translation);
+	void Draw2(glm::mat4 model_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, Shader* shaderProgram);
 };
 
 #endif BLOCK_H

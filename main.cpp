@@ -7,6 +7,9 @@
 #define GLT_IMPLEMENTATION
 #include "gltext.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include <chrono>
 #include <string>
@@ -112,7 +115,7 @@ int main()
 		text_now = std::chrono::steady_clock::now();
 		text_difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::seconds>(text_now - text_last).count()));
 		if ( (text_difference > 5.0) && (numText == 2) ) {
-			gltSetText(text[2], "To zoom in use AWSD.");
+			gltSetText(text[2], "To move the camera use AWSD.");
 			numText++;
 			w_offset = 4.0;
 		}
@@ -418,29 +421,11 @@ void processInput(GLFWwindow* window)
 	static std::chrono::steady_clock::time_point last;
 	std::chrono::steady_clock::time_point current;
 	double difference = 0;
-
-	/*
-	double difference;
-	static std::chrono::steady_clock::time_point last, current;
-	static bool lock = false;
-	static bool once = true;
-	if (once) {
-		last = std::chrono::steady_clock::now();
-		once = false;
-	}
-
-	current = std::chrono::steady_clock::now();
-	difference = (static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(current - last).count()));
-
-	if (difference > 2000) {
-		lock = true;
-		last = std::chrono::steady_clock::now();
-	}
-	else {
-		lock = false;
-	}*/
-	//if (!lock) {
-
+	static float pitch = 45;
+	static float yaw = 45;
+	float rotation_angle = 0.5;
+	float up_constraint = 85;
+	float down_constraint = 10;
 	if (key_setup == 0) {
 		if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) && (snake_directions != downwards)) {
 			snake_directions = upwards;
@@ -497,46 +482,82 @@ void processInput(GLFWwindow* window)
 			snake_directions = downwards;
 		}
 	}
-
-
-//		view = glm::mat4(1.0f);
-		//model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-//		view = glm::translate(view, glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-3.0f * game_board->getDimensions().z)));
-//		view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	static float pitch = 45;
-	//static float yaw = 0;
-	float pitch_angle = 0.5;
-	float up_pitch_constraint = 85;
-	float down_pitch_constraint = 10;
 	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-		if ( (pitch > down_pitch_constraint) ) {
-			view = glm::rotate(view, glm::radians(-pitch_angle), glm::vec3(1.0f, 0.0f, 0.0f));
-			pitch -= pitch_angle;
-		} 
-		if (pitch < down_pitch_constraint) {
-			pitch = down_pitch_constraint;
+		if (key_setup == 0) {
+			if ((pitch > down_constraint)) {
+				view = glm::rotate(view, glm::radians(-rotation_angle), glm::vec3(1.0f, 0.0f, 0.0f));
+				pitch -= rotation_angle;
+			}
+			if (pitch < down_constraint) {
+				pitch = down_constraint;
+			}
+		}
+		else if (key_setup == 1) {
+			if ((yaw > down_constraint)) {
+				view = glm::rotate(view, glm::radians(-rotation_angle), glm::vec3(0.0f, 0.0f, 1.0f));
+				yaw -= rotation_angle;
+			}
+			if (yaw < down_constraint) {
+				yaw = down_constraint;
+			}
+		}
+		else if (key_setup == 2) {
+			if ((pitch < up_constraint)) {
+				view = glm::rotate(view, glm::radians(rotation_angle), glm::vec3(1.0f, 0.0f, 0.0f));
+				pitch += rotation_angle;
+			}
+			if (pitch > up_constraint) {
+				pitch = up_constraint;
+			}
+		}
+		else if (key_setup == 3) {
+			if ((yaw < up_constraint)) {
+				view = glm::rotate(view, glm::radians(rotation_angle), glm::vec3(0.0f, 0.0f, 1.0f));
+				yaw += rotation_angle;
+			}
+			if (yaw > up_constraint) {
+				yaw = up_constraint;
+			}
 		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
-		if ((pitch < up_pitch_constraint)) {
-			view = glm::rotate(view, glm::radians(pitch_angle), glm::vec3(1.0f, 0.0f, 0.0f));
-			pitch += pitch_angle;
+		if (key_setup == 0) {
+			if ((pitch < up_constraint)) {
+				view = glm::rotate(view, glm::radians(rotation_angle), glm::vec3(1.0f, 0.0f, 0.0f));
+				pitch += rotation_angle;
+			}
+			if (pitch > up_constraint) {
+				pitch = up_constraint;
+			}
 		}
-		if (pitch > up_pitch_constraint) {
-			pitch = up_pitch_constraint;
+		else if (key_setup == 1) {
+			if ((yaw < up_constraint)) {
+				view = glm::rotate(view, glm::radians(rotation_angle), glm::vec3(0.0f, 0.0f, 1.0f));
+				yaw += rotation_angle;
+			}
+			if (yaw > up_constraint) {
+				yaw = up_constraint;
+			}
 		}
+		else if (key_setup == 2) {
+			if ((pitch > down_constraint)) {
+				view = glm::rotate(view, glm::radians(-rotation_angle), glm::vec3(1.0f, 0.0f, 0.0f));
+				pitch -= rotation_angle;
+			}
+			if (pitch < down_constraint) {
+				pitch = down_constraint;
+			}
+		}
+		else if (key_setup == 3) {
+			if (yaw < up_constraint) {
+				view = glm::rotate(view, glm::radians(-rotation_angle), glm::vec3(0.0f, 0.0f, 1.0f));
+				yaw -= rotation_angle;
+			}
+			if (yaw < down_constraint) {
+				yaw = down_constraint;
+			}
+		}	
 	}
-	//TODO: fix this mess
-	/*
-	float up_x_yaw_constraint = (game_board->getDimensions().x / 2);
-	float down_x_yaw_constraint = -1*(game_board->getDimensions().x / 2);
-	float up_z_yaw_constraint = (-3.0f * game_board->getDimensions().z);
-	float down_z_yaw_constraint = (3.0f * game_board->getDimensions().z);
-	static float current_x_yaw = up_x_yaw_constraint;
-	static float current_z_yaw = up_z_yaw_constraint;
-	*/
-	//float radius = sqrt( ((game_board->getDimensions().x/2)^2) + (3.0f*game_board->getDimensions().z / 2) ^ 2);
-	glm::vec3 camera_centre = glm::vec3( (game_board->getDimensions().x / 2), 0.0f, (game_board->getDimensions().z / 2) );
 	if (once) {
 		last = std::chrono::steady_clock::now();
 		once = false;
@@ -547,87 +568,96 @@ void processInput(GLFWwindow* window)
 		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
 			if (key_setup == 0) {
 				key_setup = 3;
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(-pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+				yaw = pitch;
 				view = glm::translate(view,
 					glm::vec3(1.0f * (game_board->getDimensions().x / 2), -3.0f, (2.5f * game_board->getDimensions().z)));
 				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 				glm::vec3(-2.5f * (game_board->getDimensions().x), 3.0f, (-1.0f *game_board->getDimensions().z/2)) );
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(-yaw), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 			else if (key_setup == 1) {
 				key_setup--;
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(-yaw), glm::vec3(0.0f, 0.0f, 1.0f));
+				pitch = yaw;
 				view = glm::translate(view,
 					glm::vec3(-2.0f * (game_board->getDimensions().x), 3.25f, (1.0f * game_board->getDimensions().z / 2)));
 				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 					glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.5f * game_board->getDimensions().z)));
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 			else if (key_setup == 2) {
 				key_setup--;
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+				yaw = pitch;
 				view = glm::translate(view,
 					glm::vec3(1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.0f * game_board->getDimensions().z)));
 				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 					glm::vec3(2.0f * (game_board->getDimensions().x), -3.0f, (-1.0f * game_board->getDimensions().z / 2)));
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 			else if (key_setup == 3) {
 				key_setup--;
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 0.0f, 1.0f));
+				pitch = yaw;
 				view = glm::translate(view,
 					glm::vec3(2.5f * (game_board->getDimensions().x), -3.0f, (1.0f * game_board->getDimensions().z / 2)));
 				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 					glm::vec3(-1.0f * (game_board->getDimensions().x/2), -3.0f, (2.0f * game_board->getDimensions().z)));
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(-pitch), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 		}
 		else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
 			if (key_setup == 3) {
 				key_setup = 0;
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 0.0f, 1.0f));
+				pitch = yaw; 
 				view = glm::translate(view,
 					glm::vec3(2.5f * (game_board->getDimensions().x), -3.0f, (1.0f * game_board->getDimensions().z / 2)));
 				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 					glm::vec3(-1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.5f * game_board->getDimensions().z)));
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 			else if (key_setup == 0) {
 				key_setup++;
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(-pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+				yaw = pitch;
 				view = glm::translate(view,
 					glm::vec3(1.0f * (game_board->getDimensions().x / 2), -3.0f, (2.5f * game_board->getDimensions().z)));
 				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 					glm::vec3(2.0f * (game_board->getDimensions().x), -3.25f, (-1.0f * game_board->getDimensions().z / 2)));
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 			else if (key_setup == 1) {
 				key_setup++;
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(-yaw), glm::vec3(0.0f, 0.0f, 1.0f));
+				pitch = yaw;
 				view = glm::translate(view,
 					glm::vec3(-2.0f * (game_board->getDimensions().x), 3.0f, (1.0f * game_board->getDimensions().z / 2)));
 				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 					glm::vec3(-1.0f * (game_board->getDimensions().x / 2), -3.0f, (2.0f * game_board->getDimensions().z)));
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(-pitch), glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 			else if (key_setup == 2) {
 				key_setup++;
-				view = glm::rotate(view, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				view = glm::rotate(view, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+				yaw = pitch;
 				view = glm::translate(view,
 					glm::vec3(1.0f * (game_board->getDimensions().x / 2), 3.0f, (-2.0f * game_board->getDimensions().z)));
 				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				view = glm::translate(view,
 					glm::vec3(-2.5f * (game_board->getDimensions().x), 3.0f, (-1.0f * game_board->getDimensions().z / 2)));
-				view = glm::rotate(view, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				view = glm::rotate(view, glm::radians(-yaw), glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 		}
+		std::cout << "pitch: " << pitch << "\nyaw: " << yaw << std::endl;
 		last = std::chrono::steady_clock::now();
 	}
 	else if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
